@@ -10,13 +10,37 @@ namespace OutlookRunProgram
 {
     public partial class ThisAddIn
     {
+        Outlook.NameSpace ns;
+
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
+			// 1. read from xml
+			ReadFromXml();
+
+
+            this.Application.NewMailEx += Application_NewMailEx;
+            ns = this.Application.GetNamespace("MAPI");
+        }
+
+		private void ReadFromXml()
+		{
+			throw new NotImplementedException();
+		}
+
+		private void Application_NewMailEx(string EntryIDCollection)
+        {
+			var item = ns.GetItemFromID(EntryIDCollection);
+
+			// try parsing messages using rules from xml
+
+
+            throw new NotImplementedException();
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-            // Note: Outlook no longer raises this event. If you have code that 
+            this.Application.NewMailEx -= Application_NewMailEx;
+            // Note: Outlook no longer raises this event. If you have code that
             //    must run when Outlook shuts down, see https://go.microsoft.com/fwlink/?LinkId=506785
         }
 
@@ -31,7 +55,7 @@ namespace OutlookRunProgram
             this.Startup += new System.EventHandler(ThisAddIn_Startup);
             this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
         }
-        
+
         #endregion
     }
 }
