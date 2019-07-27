@@ -16,9 +16,20 @@ namespace OutlookRunProgram
         {
 			// 1. read from xml
 			ReadFromXml();
+			/*
+			 * (?!) match nothing
+			 * (?=) match everything
+			 * <entry> (?!)
+			 * <regex_subject>
+			 * <regex_body>
+			 * <regex_mail>
+			 * <actions>
+			 * <run>
+			 *
+			 */
 
 
-            this.Application.NewMailEx += Application_NewMailEx;
+			this.Application.NewMailEx += Application_NewMailEx;
             ns = this.Application.GetNamespace("MAPI");
         }
 

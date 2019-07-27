@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<rule>
+	<match>
+		<regex>sSample Title</regex>
+		<regex>b(.*)</regex>
+		<regex>t(me@example.com)</regex>
+		<regex>f(.*@example.com)</regex>
+		<regex>c(.*@example.com)</regex>
+		<!-- s,b,c,t,f -->
+	</match>
+	<actions>
+		<run></run>
+		<args>$b1</args>
+		<!--eg:1 $s1 $b2 $f1
+			this would translate to:
+			$s1 - first match for subject
+			$b2 - 2nd match for body
+			$
+		-->
+	</actions>
+</rule>
