@@ -17,7 +17,7 @@ namespace OutlookRunProgram
 				string run;
 				string args;
 
-				Action()
+				internal Action()
 				{
 				}
 
