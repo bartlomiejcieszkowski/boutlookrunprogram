@@ -9,13 +9,15 @@
 		<!-- s,b,c,t,f -->
 	</match>
 	<actions>
-		<run></run>
-		<args>$b1</args>
-		<!--eg:1 $s1 $b2 $f1
-			this would translate to:
-			$s1 - first match for subject
-			$b2 - 2nd match for body
-			$
-		-->
+		<action>
+			<run></run>
+			<args>$b1</args>
+			<!--eg:1 $s1 $b2 $f1
+				this would translate to:
+				$s1 - first match for subject
+				$b2 - 2nd match for body
+				$
+			-->
+		</action>
 	</actions>
 </rule>
