@@ -103,6 +103,7 @@ namespace OutlookRunProgram
 				}
 			}
 
+			bool isFinal;
 			List<Regex> regexes = new List<Regex>();
 			List<Action> actions = new List<Action>();
 
@@ -128,9 +129,9 @@ namespace OutlookRunProgram
 				return actions.Count == 0;
 			}
 
-			internal Rule()
+			internal Rule(bool is_final)
 			{
-
+				isFinal = is_final;
 			}
 
 			internal bool IsFinal()
@@ -177,7 +178,9 @@ namespace OutlookRunProgram
 				foreach (XmlNode rule_node in doc.DocumentElement.SelectNodes("/rule"))
 				{
 					// <rule>
-					Rule rule = new Rule();
+					var is_final = (null != rule_node.SelectSingleNode("final"));
+
+					Rule rule = new Rule(is_final);
 
 					var match = rule_node.SelectSingleNode("match");
 					var regexes = match.SelectNodes("regex");
