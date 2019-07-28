@@ -7,55 +7,50 @@ namespace OutlookRunProgram
 	public partial class ThisAddIn
 	{
 		Ruler ruler = new Ruler();
+		bool enabled = false;
 
-		Outlook.NameSpace ns;
+		NameSpace ns;
 
-		private void ThisAddIn_Startup(object sender, System.EventArgs e)
+		private void ThisAddIn_Startup(object sender, EventArgs e)
 		{
-			bool success = ruler.ReadRules(Environment.GetFolderPath(
-				Environment.SpecialFolder.LocalApplicationData) + "\\bcieszko\\OutlookRunProgram"
-				);
+			Reload();
 
-			if (!success)
-			{
-				// no rules, go to void
-				return;
-			}
-
-			// 1. read from xml
-			ReadFromXml();
-			/*
-			 * (?!) match nothing
-			 * (?=) match everything
-			 * <entry> (?!)
-			 * <regex_subject>
-			 * <regex_body>
-			 * <regex_mail>
-			 * <actions>
-			 * <run>
-			 *
-			 */
-
-
-			this.Application.NewMailEx += Application_NewMailEx;
 			ns = this.Application.GetNamespace("MAPI");
+			this.Application.NewMailEx += Application_NewMailEx;
 		}
 
-		private void ReadFromXml()
+		internal void Auto(bool @checked)
 		{
-			throw new NotImplementedException();
+			enabled = @checked;
 		}
 
 		private void Application_NewMailEx(string EntryIDCollection)
 		{
-			MailItem item = ns.GetItemFromID(EntryIDCollection);
-			ruler.ApplyRules(item);
+			if (enabled)
+			{
+				MailItem item = ns.GetItemFromID(EntryIDCollection);
+				ruler.ApplyRules(item);
+			}
 		}
 
-		private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
+		internal void RunRules(MailItem mailItem)
+		{
+			ruler.ApplyRules(mailItem);
+		}
+
+		private void ThisAddIn_Shutdown(object sender, EventArgs e)
 		{
 			// Note: Outlook no longer raises this event. If you have code that
 			//    must run when Outlook shuts down, see https://go.microsoft.com/fwlink/?LinkId=506785
+		}
+
+		internal void Reload()
+		{
+			ruler.ClearRules();
+
+			bool success = ruler.ReadRules(Environment.GetFolderPath(
+				Environment.SpecialFolder.LocalApplicationData) + "\\bcieszko\\OutlookRunProgram"
+				);
 		}
 
 		#region VSTO generated code
@@ -66,8 +61,8 @@ namespace OutlookRunProgram
 		/// </summary>
 		private void InternalStartup()
 		{
-			this.Startup += new System.EventHandler(ThisAddIn_Startup);
-			this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
+			this.Startup += ThisAddIn_Startup;
+			this.Shutdown += ThisAddIn_Shutdown;
 		}
 
 		#endregion

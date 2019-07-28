@@ -9,9 +9,9 @@ using System.Security;
 [assembly: AssemblyTitle("OutlookRunProgram")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Bartlomiej Cieszkowski")]
 [assembly: AssemblyProduct("OutlookRunProgram")]
-[assembly: AssemblyCopyright("Copyright ©  2019")]
+[assembly: AssemblyCopyright("Copyright ©  Bartlomiej Cieszkowski 2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

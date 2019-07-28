@@ -336,6 +336,11 @@ namespace OutlookRunProgram
 			}
 		}
 
+		internal void ClearRules()
+		{
+			rules.Clear();
+		}
+
 		internal bool ApplyRules(MailItem item)
 		{
 			bool anyRule = false;
@@ -358,6 +363,7 @@ namespace OutlookRunProgram
 		{
 			if (!Directory.Exists(directoryPath))
 			{
+				Directory.CreateDirectory(directoryPath);
 				return false;
 			}
 
@@ -391,10 +397,8 @@ namespace OutlookRunProgram
 					}
 
 
-					var actions_group = rule_node.SelectSingleNode("actions");
-					var actions = actions_group.SelectNodes("action");
-
-					foreach (XmlNode action in actions)
+					var actions = rule_node.SelectSingleNode("actions");
+					foreach (XmlNode action in actions.SelectNodes("action"))
 					{
 						var run = action.SelectSingleNode("run");
 						// store it
@@ -404,9 +408,6 @@ namespace OutlookRunProgram
 							// bad executable
 							return false;
 						}
-
-
-
 
 						var args_node = action.SelectSingleNode("args");
 						if (args_node != null)
