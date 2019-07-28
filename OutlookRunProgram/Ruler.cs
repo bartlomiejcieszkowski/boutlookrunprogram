@@ -13,6 +13,11 @@ namespace OutlookRunProgram
 	{
 		internal class Rule
 		{
+			internal class RegexResults
+			{
+
+			}
+
 			internal class Action
 			{
 				string run;
@@ -34,6 +39,11 @@ namespace OutlookRunProgram
 					// validate
 					args = text;
 					return true;
+				}
+
+				internal void Run(RegexResults results)
+				{
+					throw new NotImplementedException();
 				}
 			}
 
@@ -101,6 +111,11 @@ namespace OutlookRunProgram
 				{
 					return scope == Scope.invalid;
 				}
+
+				internal bool Match(MailItem item, ref RegexResults results)
+				{
+					throw new NotImplementedException();
+				}
 			}
 
 			bool isFinal;
@@ -136,12 +151,31 @@ namespace OutlookRunProgram
 
 			internal bool IsFinal()
 			{
-				throw new NotImplementedException();
+				return isFinal;
 			}
 
 			internal bool Apply(MailItem item)
 			{
-				throw new NotImplementedException();
+				RegexResults results = new RegexResults();
+
+				// 1. Check if the mail match all regexes
+				foreach (var regex in regexes)
+				{
+
+					if (!regex.Match(item, ref results))
+					{
+						return false;
+					}
+
+				}
+
+				// 2. Perform actions
+				foreach (var action in actions)
+				{
+					action.Run(results);
+				}
+
+				return true;
 			}
 		}
 
