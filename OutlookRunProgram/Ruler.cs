@@ -17,7 +17,7 @@ namespace OutlookRunProgram
 		{
 			internal class RegexResults
 			{
-				Dictionary<Regex.Scope, List<Match>> results;
+				Dictionary<Regex.Scope, List<Match>> results = new Dictionary<Regex.Scope, List<Match>>();
 
 				internal void Append(MatchCollection matchCollection, Regex.Scope scope)
 				{
@@ -28,6 +28,17 @@ namespace OutlookRunProgram
 
 					results[scope].AddRange(matchCollection.Cast<Match>());
 				}
+
+				internal Match Get(Regex.Scope scope, int resultNumber)
+				{
+					var matches = results[scope];
+					if (matches.Count <= resultNumber)
+					{
+						return null;
+					}
+
+					return matches[resultNumber];
+				}
 			}
 
 			internal class Action
@@ -37,7 +48,7 @@ namespace OutlookRunProgram
 					private ArgType type;
 					private Rule.Regex.Scope scope;
 					private string text;
-					private uint resultNumber;
+					private int resultNumber;
 
 					internal Arg(string text)
 					{
@@ -46,7 +57,7 @@ namespace OutlookRunProgram
 						this.scope = Regex.Scope.invalid;
 					}
 
-					public Arg(Regex.Scope scope, uint resultNumber)
+					public Arg(Regex.Scope scope, int resultNumber)
 					{
 						this.type = ArgType.regex;
 						this.text = null;
@@ -62,7 +73,6 @@ namespace OutlookRunProgram
 
 					internal static Arg Create(string text)
 					{
-						Arg newArg = null;
 						Rule.Regex.Scope scope = Regex.Scope.invalid;
 						// eh, simple if'ology would be sufficient
 						if (text.StartsWith("$s"))
@@ -90,8 +100,8 @@ namespace OutlookRunProgram
 							return new Arg(text);
 						}
 
-						UInt32 resultNumber;
-						if (!UInt32.TryParse(text.Substring(2, text.Length - 2), out resultNumber))
+						int resultNumber;
+						if (!int.TryParse(text.Substring(2, text.Length - 2), out resultNumber))
 						{
 							return null;
 						}
@@ -101,12 +111,26 @@ namespace OutlookRunProgram
 
 					internal string GetValue(RegexResults results)
 					{
-						throw new NotImplementedException();
+						if (type == ArgType.text)
+						{
+							return text;
+						}
+						else if (type == ArgType.regex)
+						{
+							Match match = results.Get(scope, resultNumber);
+							if (match == null)
+							{
+								return String.Empty;
+							}
+
+							return match.Value;
+						}
+						return String.Empty;
 					}
 				}
 
-				string run;
-				List<Arg> args;
+				string run = string.Empty;
+				List<Arg> args = new List<Arg>();
 
 				internal Action()
 				{
@@ -131,24 +155,24 @@ namespace OutlookRunProgram
 
 				internal void Run(ref RegexResults results)
 				{
-					ProcessStartInfo process = new ProcessStartInfo(run);
+					ProcessStartInfo processStartInfo = new ProcessStartInfo(run);
 					if (args.Count != 0)
 					{
 						StringBuilder sb = new StringBuilder();
 
 						foreach (var arg in args)
 						{
+							sb.Append('"');
 							sb.Append(arg.GetValue(results));
-							sb.Append(' ');
+							sb.Append("\" ");
 						}
+
+						processStartInfo.Arguments = sb.ToString();
 					}
 
-					/*
-					Process.Start(
-						)
-						*/
+					processStartInfo.UseShellExecute = true;
 
-					throw new NotImplementedException();
+					Process.Start(processStartInfo);
 				}
 			}
 
@@ -305,7 +329,7 @@ namespace OutlookRunProgram
 				// 2. Perform actions
 				foreach (var action in actions)
 				{
-					action.Run(results);
+					action.Run(ref results);
 				}
 
 				return true;
