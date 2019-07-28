@@ -1,19 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
 using Outlook = Microsoft.Office.Interop.Outlook;
-using Office = Microsoft.Office.Core;
+using Microsoft.Office.Interop.Outlook;
 
 namespace OutlookRunProgram
 {
-    public partial class ThisAddIn
-    {
-        Outlook.NameSpace ns;
+	public partial class ThisAddIn
+	{
+		Ruler ruler = new Ruler();
 
-        private void ThisAddIn_Startup(object sender, System.EventArgs e)
-        {
+		Outlook.NameSpace ns;
+
+		private void ThisAddIn_Startup(object sender, System.EventArgs e)
+		{
+			bool success = ruler.ReadRules(Environment.GetFolderPath(
+				Environment.SpecialFolder.LocalApplicationData) + "\\bcieszko\\OutlookRunProgram"
+				);
+
+			if (!success)
+			{
+				// no rules, go to void
+				return;
+			}
+
 			// 1. read from xml
 			ReadFromXml();
 			/*
@@ -30,8 +38,8 @@ namespace OutlookRunProgram
 
 
 			this.Application.NewMailEx += Application_NewMailEx;
-            ns = this.Application.GetNamespace("MAPI");
-        }
+			ns = this.Application.GetNamespace("MAPI");
+		}
 
 		private void ReadFromXml()
 		{
@@ -39,34 +47,29 @@ namespace OutlookRunProgram
 		}
 
 		private void Application_NewMailEx(string EntryIDCollection)
-        {
-			var item = ns.GetItemFromID(EntryIDCollection);
+		{
+			MailItem item = ns.GetItemFromID(EntryIDCollection);
+			ruler.ApplyRules(item);
+		}
 
-			// try parsing messages using rules from xml
+		private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
+		{
+			// Note: Outlook no longer raises this event. If you have code that
+			//    must run when Outlook shuts down, see https://go.microsoft.com/fwlink/?LinkId=506785
+		}
 
+		#region VSTO generated code
 
-            throw new NotImplementedException();
-        }
+		/// <summary>
+		/// Required method for Designer support - do not modify
+		/// the contents of this method with the code editor.
+		/// </summary>
+		private void InternalStartup()
+		{
+			this.Startup += new System.EventHandler(ThisAddIn_Startup);
+			this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
+		}
 
-        private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
-        {
-            this.Application.NewMailEx -= Application_NewMailEx;
-            // Note: Outlook no longer raises this event. If you have code that
-            //    must run when Outlook shuts down, see https://go.microsoft.com/fwlink/?LinkId=506785
-        }
-
-        #region VSTO generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
-        private void InternalStartup()
-        {
-            this.Startup += new System.EventHandler(ThisAddIn_Startup);
-            this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
-        }
-
-        #endregion
-    }
+		#endregion
+	}
 }

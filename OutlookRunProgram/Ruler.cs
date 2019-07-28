@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.Office.Interop.Outlook;
 
 namespace OutlookRunProgram
 {
@@ -120,10 +121,20 @@ namespace OutlookRunProgram
 			}
 		}
 
+		internal void ApplyRules(MailItem item)
+		{
+			throw new NotImplementedException();
+		}
+
 		List<Rule> rules = new List<Rule>();
 
-		public void ReadRules(string directoryPath)
+		public bool ReadRules(string directoryPath)
 		{
+			if (!Directory.Exists(directoryPath))
+			{
+				return false;
+			}
+
 			foreach (var xmlfile in Directory.EnumerateFiles(directoryPath, "*.xml"))
 			{
 				XmlDocument doc = new XmlDocument();
@@ -147,7 +158,7 @@ namespace OutlookRunProgram
 						if (!rule.AddRegex(text))
 						{
 							// bad regex
-							return;
+							return false;
 						}
 					}
 
@@ -163,7 +174,7 @@ namespace OutlookRunProgram
 						if (!ruleAction.SetRun(run.InnerText))
 						{
 							// bad executable
-							return;
+							return false;
 						}
 
 
@@ -175,7 +186,7 @@ namespace OutlookRunProgram
 							if (!ruleAction.SetArgs(args.InnerText))
 							{
 								// bad args
-								return;
+								return false;
 							}
 						}
 
@@ -186,6 +197,8 @@ namespace OutlookRunProgram
 				}
 
 			}
+
+			return true;
 		}
 	}
 }
