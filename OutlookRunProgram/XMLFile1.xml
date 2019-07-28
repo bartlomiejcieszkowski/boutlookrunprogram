@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <rule>
 	<match>
-		<regex>sSample Title</regex>
-		<regex>b(.*)</regex>
-		<regex>t(me@example.com)</regex>
-		<regex>f(.*@example.com)</regex>
-		<regex>c(.*@example.com)</regex>
+		<regex>s(?n)(Sample Title)</regex>
+		<regex>b(?n)(.*)</regex>
+		<regex>t(?n)(me@example.com)</regex>
+		<regex>f(?n)(.*@example.com)</regex>
+		<regex>c(?n)(.*@example.com)</regex>
 		<!-- s,b,c,t,f -->
 	</match>
 	<actions>

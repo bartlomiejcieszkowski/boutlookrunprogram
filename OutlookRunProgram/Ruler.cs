@@ -52,6 +52,7 @@ namespace OutlookRunProgram
 
 				Scope scope;
 				string regex;
+				System.Text.RegularExpressions.Regex realRegex;
 
 				internal Regex(string text)
 				{
@@ -82,6 +83,18 @@ namespace OutlookRunProgram
 					}
 
 					regex = text.Substring(1, text.Length - 1);
+					try
+					{
+						realRegex = new System.Text.RegularExpressions.Regex(
+							regex,
+							System.Text.RegularExpressions.RegexOptions.Compiled //| System.Text.RegularExpressions.RegexOptions.ExplicitCapture (?n)
+							);
+					}
+					catch(System.Exception) //System.ArgumentException)
+					{
+						realRegex = null;
+						scope = Scope.invalid;
+					}
 				}
 
 				internal bool Invalid()
@@ -119,11 +132,32 @@ namespace OutlookRunProgram
 			{
 
 			}
+
+			internal bool IsFinal()
+			{
+				throw new NotImplementedException();
+			}
+
+			internal bool Apply(MailItem item)
+			{
+				throw new NotImplementedException();
+			}
 		}
 
-		internal void ApplyRules(MailItem item)
+		internal bool ApplyRules(MailItem item)
 		{
-			throw new NotImplementedException();
+			bool anyRule = false;
+			foreach(var rule in rules)
+			{
+				bool appliedRule = rule.Apply(item);
+				anyRule |= appliedRule;
+				if (rule.IsFinal() && appliedRule)
+				{
+					break;
+				}
+			}
+
+			return anyRule;
 		}
 
 		List<Rule> rules = new List<Rule>();
