@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Office.Interop.Outlook;
@@ -15,7 +16,10 @@ namespace OutlookRunProgram
 		{
 			internal class RegexResults
 			{
-
+				internal void Append(MatchCollection matchCollection, Regex.Scope scope)
+				{
+					throw new NotImplementedException();
+				}
 			}
 
 			internal class Action
@@ -50,7 +54,7 @@ namespace OutlookRunProgram
 
 			internal class Regex
 			{
-				enum Scope
+				internal enum Scope
 				{
 					subject,
 					body,
@@ -114,7 +118,35 @@ namespace OutlookRunProgram
 
 				internal bool Match(MailItem item, ref RegexResults results)
 				{
-					throw new NotImplementedException();
+					System.Text.RegularExpressions.MatchCollection matchCollection = null;
+					switch (scope)
+					{
+						case Scope.subject:
+							matchCollection = realRegex.Matches(item.Subject);
+							break;
+						case Scope.body:
+							matchCollection = realRegex.Matches(item.Body);
+							break;
+						case Scope.from:
+							matchCollection = realRegex.Matches(item.SenderName);
+							break;
+						case Scope.to:
+							matchCollection = realRegex.Matches(item.To);
+							break;
+						case Scope.cc:
+							matchCollection = realRegex.Matches(item.CC);
+
+							break;
+						default:
+							return false;
+
+					}
+
+					if (matchCollection.Count == 0) return false;
+
+					results.Append(matchCollection, scope);
+
+					return true;
 				}
 			}
 
