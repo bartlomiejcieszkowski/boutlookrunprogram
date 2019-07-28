@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -16,16 +17,96 @@ namespace OutlookRunProgram
 		{
 			internal class RegexResults
 			{
+				Dictionary<Regex.Scope, List<Match>> results;
+
 				internal void Append(MatchCollection matchCollection, Regex.Scope scope)
 				{
-					throw new NotImplementedException();
+					if (!results.ContainsKey(scope))
+					{
+						results.Add(scope, new List<Match>(matchCollection.Cast<Match>()));
+					}
+
+					results[scope].AddRange(matchCollection.Cast<Match>());
 				}
 			}
 
 			internal class Action
 			{
+				internal class Arg
+				{
+					private ArgType type;
+					private Rule.Regex.Scope scope;
+					private string text;
+					private uint resultNumber;
+
+					internal Arg(string text)
+					{
+						this.text = text;
+						this.type = ArgType.text;
+						this.scope = Regex.Scope.invalid;
+					}
+
+					public Arg(Regex.Scope scope, uint resultNumber)
+					{
+						this.type = ArgType.regex;
+						this.text = null;
+						this.scope = scope;
+						this.resultNumber = resultNumber;
+					}
+
+					internal enum ArgType
+					{
+						text,
+						regex
+					}
+
+					internal static Arg Create(string text)
+					{
+						Arg newArg = null;
+						Rule.Regex.Scope scope = Regex.Scope.invalid;
+						// eh, simple if'ology would be sufficient
+						if (text.StartsWith("$s"))
+						{
+							scope = Regex.Scope.subject;
+						}
+						else if (text.StartsWith("$b"))
+						{
+							scope = Regex.Scope.body;
+						}
+						else if (text.StartsWith("$t"))
+						{
+							scope = Regex.Scope.to;
+						}
+						else if (text.StartsWith("$f"))
+						{
+							scope = Regex.Scope.from;
+						}
+						else if (text.StartsWith("$c"))
+						{
+							scope = Regex.Scope.cc;
+						}
+						else
+						{
+							return new Arg(text);
+						}
+
+						UInt32 resultNumber;
+						if (!UInt32.TryParse(text.Substring(2, text.Length - 2), out resultNumber))
+						{
+							return null;
+						}
+
+						return new Arg(scope, resultNumber);
+					}
+
+					internal string GetValue(RegexResults results)
+					{
+						throw new NotImplementedException();
+					}
+				}
+
 				string run;
-				string args;
+				List<Arg> args;
 
 				internal Action()
 				{
@@ -38,15 +119,35 @@ namespace OutlookRunProgram
 					return true;
 				}
 
-				internal bool SetArgs(string text)
+				internal bool AddArg(string text)
 				{
-					// validate
-					args = text;
+					Arg arg = Arg.Create(text);
+					if (arg == null)
+						return false;
+
+					args.Add(arg);
 					return true;
 				}
 
-				internal void Run(RegexResults results)
+				internal void Run(ref RegexResults results)
 				{
+					ProcessStartInfo process = new ProcessStartInfo(run);
+					if (args.Count != 0)
+					{
+						StringBuilder sb = new StringBuilder();
+
+						foreach (var arg in args)
+						{
+							sb.Append(arg.GetValue(results));
+							sb.Append(' ');
+						}
+					}
+
+					/*
+					Process.Start(
+						)
+						*/
+
 					throw new NotImplementedException();
 				}
 			}
@@ -73,7 +174,7 @@ namespace OutlookRunProgram
 					scope = Scope.invalid;
 					if (text.Length < 2)
 					{
-						regex = String.Empty;
+						regex = string.Empty;
 						return;
 					}
 
@@ -101,10 +202,10 @@ namespace OutlookRunProgram
 					{
 						realRegex = new System.Text.RegularExpressions.Regex(
 							regex,
-							System.Text.RegularExpressions.RegexOptions.Compiled //| System.Text.RegularExpressions.RegexOptions.ExplicitCapture (?n)
+							RegexOptions.Compiled | RegexOptions.ExplicitCapture
 							);
 					}
-					catch(System.Exception) //System.ArgumentException)
+					catch(System.Exception)
 					{
 						realRegex = null;
 						scope = Scope.invalid;
@@ -283,13 +384,16 @@ namespace OutlookRunProgram
 
 
 
-						var args = action.SelectSingleNode("args");
-						if (args != null)
+						var args_node = action.SelectSingleNode("args");
+						if (args_node != null)
 						{
-							if (!ruleAction.SetArgs(args.InnerText))
+							foreach (XmlNode arg in args_node.SelectNodes("arg"))
 							{
-								// bad args
-								return false;
+								if (!ruleAction.AddArg(arg.InnerText))
+								{
+									// bad args
+									return false;
+								}
 							}
 						}
 

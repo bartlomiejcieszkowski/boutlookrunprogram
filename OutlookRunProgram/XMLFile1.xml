@@ -2,17 +2,22 @@
 <rule>
 	<!--<final />-->
 	<match>
-		<regex>s(?n)(Sample Title)</regex>
-		<regex>b(?n)(.*)</regex>
-		<regex>t(?n)(me@example.com)</regex>
-		<regex>f(?n)(.*@example.com)</regex>
-		<regex>c(?n)(.*@example.com)</regex>
-		<!-- s,b,c,t,f -->
+		<regex>s(Sample Title)</regex>
+		<regex>b(.*)</regex>
+		<regex>t(me@example.com)</regex>
+		<regex>f(.*@example.com)</regex>
+		<regex>c(.*@example.com)</regex>
+		<!-- s,b,c,t,f
+			only explicit captures
+		-->
 	</match>
 	<actions>
 		<action>
 			<run></run>
-			<args>$b1</args>
+			<args>
+				<arg>$b1</arg>
+				<arg>$f1</arg>
+			</args>
 			<!--eg:1 $s1 $b2 $f1
 				this would translate to:
 				$s1 - first match for subject
