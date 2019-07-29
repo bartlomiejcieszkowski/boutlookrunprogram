@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Office.Interop.Outlook;
 
@@ -17,7 +16,7 @@ namespace OutlookRunProgram
 		{
 			internal class RegexResults
 			{
-				Dictionary<Regex.Scope, List<Match>> results = new Dictionary<Regex.Scope, List<Match>>();
+				private readonly Dictionary<Regex.Scope, List<Match>> results = new Dictionary<Regex.Scope, List<Match>>();
 
 				internal void Append(MatchCollection matchCollection, Regex.Scope scope)
 				{
@@ -45,10 +44,10 @@ namespace OutlookRunProgram
 			{
 				internal class Arg
 				{
-					private ArgType type;
-					private Rule.Regex.Scope scope;
-					private string text;
-					private int resultNumber;
+					private readonly ArgType type;
+					private readonly Regex.Scope scope;
+					private readonly string text;
+					private readonly int resultNumber;
 
 					internal Arg(string text)
 					{
@@ -100,8 +99,7 @@ namespace OutlookRunProgram
 							return new Arg(text);
 						}
 
-						int resultNumber;
-						if (!int.TryParse(text.Substring(2, text.Length - 2), out resultNumber))
+						if (!int.TryParse(text.Substring(2, text.Length - 2), out int resultNumber))
 						{
 							return null;
 						}
@@ -129,8 +127,11 @@ namespace OutlookRunProgram
 					}
 				}
 
-				string run = string.Empty;
-				List<Arg> args = new List<Arg>();
+				private string run = string.Empty;
+				private readonly List<Arg> args = new List<Arg>();
+				private bool hide;
+				private bool minimize;
+				private bool shellexecute;
 
 				internal Action()
 				{
@@ -170,12 +171,34 @@ namespace OutlookRunProgram
 						processStartInfo.Arguments = sb.ToString();
 					}
 
-					processStartInfo.UseShellExecute = true;
+					Globals.ThisAddIn.GetLogger().Log($"Running: {processStartInfo.FileName} {processStartInfo.Arguments}");
+
+					processStartInfo.UseShellExecute = shellexecute;
+					processStartInfo.CreateNoWindow = hide;
+
+					if(minimize)
+					{
+						processStartInfo.WindowStyle = ProcessWindowStyle.Minimized;
+					}
 
 					Process.Start(processStartInfo);
 				}
-			}
 
+				internal void SetHide(bool v)
+				{
+					hide = v;
+				}
+
+				internal void SetShellExecute(bool v)
+				{
+					shellexecute = v;
+				}
+
+				internal void SetMinimize(bool v)
+				{
+					minimize = v;
+				}
+			}
 
 			internal class Regex
 			{
@@ -189,9 +212,9 @@ namespace OutlookRunProgram
 					invalid
 				}
 
-				Scope scope;
-				string regex;
-				System.Text.RegularExpressions.Regex realRegex;
+				private readonly Scope scope;
+				private readonly string regex;
+				private readonly System.Text.RegularExpressions.Regex realRegex;
 
 				internal Regex(string text)
 				{
@@ -243,7 +266,7 @@ namespace OutlookRunProgram
 
 				internal bool Match(MailItem item, ref RegexResults results)
 				{
-					System.Text.RegularExpressions.MatchCollection matchCollection = null;
+					MatchCollection matchCollection = null;
 					switch (scope)
 					{
 						case Scope.subject:
@@ -260,14 +283,18 @@ namespace OutlookRunProgram
 							break;
 						case Scope.cc:
 							matchCollection = realRegex.Matches(item.CC);
-
 							break;
 						default:
 							return false;
-
 					}
 
 					if (matchCollection.Count == 0) return false;
+
+					Globals.ThisAddIn.GetLogger().Log($"{scope.ToString()} - {matchCollection.Count}");
+					for (int i = 0; i < matchCollection.Count; ++i)
+					{
+						Globals.ThisAddIn.GetLogger().Log($"{i}. {matchCollection[i].Value}");
+					}
 
 					results.Append(matchCollection, scope);
 
@@ -275,9 +302,9 @@ namespace OutlookRunProgram
 				}
 			}
 
-			bool isFinal;
-			List<Regex> regexes = new List<Regex>();
-			List<Action> actions = new List<Action>();
+			private readonly bool is_final;
+			private readonly List<Regex> regexes = new List<Regex>();
+			private readonly List<Action> actions = new List<Action>();
 
 			internal bool AddRegex(string text)
 			{
@@ -303,12 +330,12 @@ namespace OutlookRunProgram
 
 			internal Rule(bool is_final)
 			{
-				isFinal = is_final;
+				this.is_final = is_final;
 			}
 
 			internal bool IsFinal()
 			{
-				return isFinal;
+				return is_final;
 			}
 
 			internal bool Apply(MailItem item)
@@ -318,12 +345,10 @@ namespace OutlookRunProgram
 				// 1. Check if the mail match all regexes
 				foreach (var regex in regexes)
 				{
-
 					if (!regex.Match(item, ref results))
 					{
 						return false;
 					}
-
 				}
 
 				// 2. Perform actions
@@ -338,15 +363,18 @@ namespace OutlookRunProgram
 
 		internal void ClearRules()
 		{
+			Globals.ThisAddIn.GetLogger().Log($"Clearing..");
 			rules.Clear();
 		}
 
 		internal bool ApplyRules(MailItem item)
 		{
+			Globals.ThisAddIn.GetLogger().Log($"{item.SenderName} - {item.Subject}");
 			bool anyRule = false;
 			foreach(var rule in rules)
 			{
 				bool appliedRule = rule.Apply(item);
+				Globals.ThisAddIn.GetLogger().Log($"Rule[{rule.GetHashCode()}] applied? {appliedRule}");
 				anyRule |= appliedRule;
 				if (rule.IsFinal() && appliedRule)
 				{
@@ -357,7 +385,7 @@ namespace OutlookRunProgram
 			return anyRule;
 		}
 
-		List<Rule> rules = new List<Rule>();
+		private readonly List<Rule> rules = new List<Rule>();
 
 		public bool ReadRules(string directoryPath)
 		{
@@ -369,15 +397,21 @@ namespace OutlookRunProgram
 
 			foreach (var xmlfile in Directory.EnumerateFiles(directoryPath, "*.xml"))
 			{
+				Globals.ThisAddIn.GetLogger().Log($"Loading rules from: {xmlfile}");
 				XmlDocument doc = new XmlDocument();
-				doc.Load(xmlfile);
-				// TODO: validate document, dont care about it atm
+				try
+				{
+					doc.Load(xmlfile);
+				}
+				catch (System.Exception)
+				{
+					Globals.ThisAddIn.GetLogger().Log($"Malformed xml: {xmlfile}");
+				}
+
 				foreach (XmlNode rule_node in doc.DocumentElement.SelectNodes("/rule"))
 				{
 					// <rule>
-					var is_final = (null != rule_node.SelectSingleNode("final"));
-
-					Rule rule = new Rule(is_final);
+					Rule rule = new Rule(rule_node.SelectSingleNode("final") != null);
 
 					var match = rule_node.SelectSingleNode("match");
 					var regexes = match.SelectNodes("regex");
@@ -396,7 +430,6 @@ namespace OutlookRunProgram
 						}
 					}
 
-
 					var actions = rule_node.SelectSingleNode("actions");
 					foreach (XmlNode action in actions.SelectNodes("action"))
 					{
@@ -408,6 +441,10 @@ namespace OutlookRunProgram
 							// bad executable
 							return false;
 						}
+
+						ruleAction.SetHide(action.SelectSingleNode("hide") != null);
+						ruleAction.SetShellExecute(action.SelectSingleNode("shellexecute") != null);
+						ruleAction.SetMinimize(action.SelectSingleNode("minimize") != null);
 
 						var args_node = action.SelectSingleNode("args");
 						if (args_node != null)
@@ -427,9 +464,8 @@ namespace OutlookRunProgram
 
 					rules.Add(rule);
 				}
-
 			}
-
+			Globals.ThisAddIn.GetLogger().Log($"Got {rules.Count}");
 			return true;
 		}
 	}

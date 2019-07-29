@@ -2,21 +2,25 @@
 <rule>
 	<!--<final />-->
 	<match>
-		<regex>s(Sample Title)</regex>
-		<regex>b(.*)</regex>
-		<regex>t(me@example.com)</regex>
-		<regex>f(.*@example.com)</regex>
-		<regex>c(.*@example.com)</regex>
+		<regex>f(.*)</regex>
+		<regex>s(.*)</regex>
+		<regex>b(EDRM Enron Email Data.*)</regex>
 		<!-- s,b,c,t,f
 			only explicit captures
 		-->
 	</match>
 	<actions>
 		<action>
-			<run></run>
+			<run>Z:\Bart\voice.exe</run>
+			<hide />
+			<!--<shellexecute />-->
+			<minimize />
 			<args>
-				<arg>$b1</arg>
-				<arg>$f1</arg>
+				<arg>Got mail from</arg>
+				<arg>$f0</arg>
+				<arg>with subject</arg>
+				<arg>$s0</arg>
+				<!--<arg>$b1</arg>-->
 			</args>
 			<!--eg:1 $s1 $b2 $f1
 				this would translate to:
@@ -27,3 +31,4 @@
 		</action>
 	</actions>
 </rule>
+ test

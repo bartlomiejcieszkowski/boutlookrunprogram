@@ -1,22 +1,38 @@
 ﻿using System;
-using Outlook = Microsoft.Office.Interop.Outlook;
 using Microsoft.Office.Interop.Outlook;
+using bLogger;
+using System.IO;
 
 namespace OutlookRunProgram
 {
 	public partial class ThisAddIn
 	{
-		Ruler ruler = new Ruler();
-		bool enabled = false;
+		private readonly Ruler ruler = new Ruler();
+		private bool enabled = false;
+		private Logger logger;
 
-		NameSpace ns;
+		private NameSpace ns;
+
+		public Logger GetLogger() { return logger; }
+
+		private string GetPluginDirectory()
+		{
+			return Environment.GetFolderPath(
+				Environment.SpecialFolder.LocalApplicationData) + "\\bcieszko\\OutlookRunProgram";
+		}
 
 		private void ThisAddIn_Startup(object sender, EventArgs e)
 		{
+			if (!Directory.Exists(GetPluginDirectory()))
+			{
+				Directory.CreateDirectory(GetPluginDirectory());
+			}
+
+			logger = new Logger(GetPluginDirectory() + "\\bOutlookRunProgram.log");
 			Reload();
 
-			ns = this.Application.GetNamespace("MAPI");
-			this.Application.NewMailEx += Application_NewMailEx;
+			ns = Application.GetNamespace("MAPI");
+			Application.NewMailEx += Application_NewMailEx;
 		}
 
 		internal void Auto(bool @checked)
@@ -48,9 +64,8 @@ namespace OutlookRunProgram
 		{
 			ruler.ClearRules();
 
-			bool success = ruler.ReadRules(Environment.GetFolderPath(
-				Environment.SpecialFolder.LocalApplicationData) + "\\bcieszko\\OutlookRunProgram"
-				);
+			bool success = ruler.ReadRules(GetPluginDirectory());
+			logger.Log($"Load succes? {success}");
 		}
 
 		#region VSTO generated code

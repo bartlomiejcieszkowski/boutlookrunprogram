@@ -37,8 +37,9 @@
 			this.tab1 = this.Factory.CreateRibbonTab();
 			this.group1 = this.Factory.CreateRibbonGroup();
 			this.toggleButtonAuto = this.Factory.CreateRibbonToggleButton();
-			this.buttonRun = this.Factory.CreateRibbonButton();
 			this.buttonReload = this.Factory.CreateRibbonButton();
+			this.buttonRun = this.Factory.CreateRibbonButton();
+			this.buttonLog = this.Factory.CreateRibbonButton();
 			this.tab1.SuspendLayout();
 			this.group1.SuspendLayout();
 			this.SuspendLayout();
@@ -55,6 +56,7 @@
 			this.group1.Items.Add(this.toggleButtonAuto);
 			this.group1.Items.Add(this.buttonReload);
 			this.group1.Items.Add(this.buttonRun);
+			this.group1.Items.Add(this.buttonLog);
 			this.group1.Label = "bORP";
 			this.group1.Name = "group1";
 			// 
@@ -62,19 +64,25 @@
 			// 
 			this.toggleButtonAuto.Label = "Apply on new mail";
 			this.toggleButtonAuto.Name = "toggleButtonAuto";
-			this.toggleButtonAuto.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.toggleButton1_Click);
-			// 
-			// buttonRun
-			// 
-			this.buttonRun.Label = "Run on current mail";
-			this.buttonRun.Name = "buttonRun";
-			this.buttonRun.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonRun_Click);
+			this.toggleButtonAuto.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ToggleButton1_Click);
 			// 
 			// buttonReload
 			// 
 			this.buttonReload.Label = "Reload";
 			this.buttonReload.Name = "buttonReload";
-			this.buttonReload.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonReload_Click);
+			this.buttonReload.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ButtonReload_Click);
+			// 
+			// buttonRun
+			// 
+			this.buttonRun.Label = "Run on current mail";
+			this.buttonRun.Name = "buttonRun";
+			this.buttonRun.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ButtonRun_Click);
+			// 
+			// buttonLog
+			// 
+			this.buttonLog.Label = "Show log";
+			this.buttonLog.Name = "buttonLog";
+			this.buttonLog.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ButtonLog_Click);
 			// 
 			// OutlookRunProgramRibbon
 			// 
@@ -97,6 +105,7 @@
 		internal Microsoft.Office.Tools.Ribbon.RibbonToggleButton toggleButtonAuto;
 		internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonRun;
 		internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonReload;
+		internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonLog;
 	}
 
 	partial class ThisRibbonCollection

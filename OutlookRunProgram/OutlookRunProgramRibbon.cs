@@ -12,31 +12,33 @@ namespace OutlookRunProgram
 		private void OutlookRunProgramRibbon_Load(object sender, RibbonUIEventArgs e)
 		{
 			Globals.ThisAddIn.Auto(toggleButtonAuto.Checked);
-
 		}
 
-		private void toggleButton1_Click(object sender, RibbonControlEventArgs e)
+		private void ToggleButton1_Click(object sender, RibbonControlEventArgs e)
 		{
 			Globals.ThisAddIn.Auto(toggleButtonAuto.Checked);
 		}
 
-		private void buttonRun_Click(object sender, RibbonControlEventArgs e)
+		private void ButtonRun_Click(object sender, RibbonControlEventArgs e)
 		{
 			var activeExplorer = Globals.ThisAddIn.Application.ActiveExplorer();
 			foreach (var selectedItem in activeExplorer.Selection)
 			{
-				var mailItem = selectedItem as MailItem;
-				if (mailItem != null)
+				if (selectedItem is MailItem mailItem)
 				{
 					Globals.ThisAddIn.RunRules(selectedItem as MailItem);
 				}
 			}
-
 		}
 
-		private void buttonReload_Click(object sender, RibbonControlEventArgs e)
+		private void ButtonReload_Click(object sender, RibbonControlEventArgs e)
 		{
 			Globals.ThisAddIn.Reload();
+		}
+
+		private void ButtonLog_Click(object sender, RibbonControlEventArgs e)
+		{
+			Globals.ThisAddIn.GetLogger().Show();
 		}
 	}
 }
