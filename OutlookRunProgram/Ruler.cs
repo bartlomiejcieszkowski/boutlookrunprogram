@@ -163,9 +163,8 @@ namespace OutlookRunProgram
 
 						foreach (var arg in args)
 						{
-							//sb.Append('"');
 							sb.Append(arg.GetValue(results));
-							sb.Append(" ");
+							sb.Append(' ');
 						}
 
 						processStartInfo.Arguments = sb.ToString();
