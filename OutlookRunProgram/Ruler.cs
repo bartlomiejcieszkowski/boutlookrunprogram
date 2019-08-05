@@ -14,18 +14,48 @@ namespace OutlookRunProgram
 	{
 		internal class Rule
 		{
+			internal class StringInt
+			{
+				public enum matchType{
+					named,
+					numbered
+				}
+
+				matchType type;
+				int number;
+				string named;
+
+				public StringInt(int number)
+				{
+					type = matchType.numbered;
+					this.number = number;
+					named = string.Empty;
+				}
+
+				public StringInt(string name)
+				{
+					type = matchType.named;
+					this.number = -1;
+					named = name;
+				}
+
+				public matchType GetType() { return type; }
+				public int GetNumber() { return number; }
+				public string GetNamed() { return named; }
+			}
 			internal class RegexResults
 			{
 				private readonly Dictionary<Regex.Scope, List<Match>> results = new Dictionary<Regex.Scope, List<Match>>();
 
-				internal void Append(MatchCollection matchCollection, Regex.Scope scope)
+				internal void Append(Match match, Regex.Scope scope)
 				{
 					if (!results.ContainsKey(scope))
 					{
-						results.Add(scope, new List<Match>(matchCollection.Cast<Match>()));
+
+						results.Add(scope, new List<Match>(1));
 					}
 
-					results[scope].AddRange(matchCollection.Cast<Match>());
+					results[scope].Add(match);
 				}
 
 				internal Match Get(Regex.Scope scope, int resultNumber)
@@ -35,7 +65,6 @@ namespace OutlookRunProgram
 					{
 						return null;
 					}
-
 					return matches[resultNumber];
 				}
 			}
@@ -48,12 +77,14 @@ namespace OutlookRunProgram
 					private readonly Regex.Scope scope;
 					private readonly string text;
 					private readonly int resultNumber;
+					private StringInt stringInt;
 
 					internal Arg(string text)
 					{
 						this.text = text;
 						this.type = ArgType.text;
 						this.scope = Regex.Scope.invalid;
+						this.stringInt = null;
 					}
 
 					public Arg(Regex.Scope scope, int resultNumber)
@@ -62,6 +93,16 @@ namespace OutlookRunProgram
 						this.text = null;
 						this.scope = scope;
 						this.resultNumber = resultNumber;
+						this.stringInt = null;
+					}
+
+					public Arg(Regex.Scope scope, int resultNumber, StringInt stringInt)
+					{
+						this.type = ArgType.regex;
+						this.text = null;
+						this.scope = scope;
+						this.resultNumber = resultNumber;
+						this.stringInt = stringInt;
 					}
 
 					internal enum ArgType
@@ -99,12 +140,46 @@ namespace OutlookRunProgram
 							return new Arg(text);
 						}
 
-						if (!int.TryParse(text.Substring(2, text.Length - 2), out int resultNumber))
-						{
-							return null;
-						}
+						var sub = text.Substring(2, text.Length - 2);
+						var separator = text.IndexOf('.');
 
-						return new Arg(scope, resultNumber);
+						int resultNumber;
+						StringInt stringInt = null;
+
+						if (separator < 0)
+						{
+							// $cN - Nth match, implicit 0th group
+							if (!int.TryParse(text.Substring(2, text.Length - 2), out resultNumber))
+							{
+								return null;
+							}
+							return new Arg(scope, resultNumber);
+						}
+						else if (separator <= 2)
+						{
+							// $c. .. just nope
+							return null;
+						} else
+						{
+							if (!int.TryParse(text.Substring(2, separator - 2), out resultNumber))
+							{
+								return null;
+							}
+
+							int group;
+							if (!int.TryParse(text.Substring(separator, text.Length - separator), out group))
+							{
+								// $cN.groupname
+								stringInt = new StringInt(text.Substring(separator, text.Length - separator));
+							}
+							else
+							{
+								// $cN.M - Nth match Mth group
+								stringInt = new StringInt(group);
+							}
+
+							return new Arg(scope, resultNumber, stringInt);
+						}
 					}
 
 					internal string GetValue(RegexResults results)
@@ -118,12 +193,37 @@ namespace OutlookRunProgram
 							Match match = results.Get(scope, resultNumber);
 							if (match == null)
 							{
-								return String.Empty;
+								return "NO_MATCH";
 							}
 
-							return match.Value;
+							if (stringInt == null)
+							{
+								if (match.Groups.Count == 0)
+								{
+									return "NO_MATCH_GROUP";
+								}
+
+								return match.Groups[0].Value;
+							}
+
+							if (stringInt.GetType() == StringInt.matchType.numbered)
+							{
+								if (match.Groups.Count <= stringInt.GetNumber())
+								{
+									return "NO_MATCH_GROUP";
+								}
+
+								return match.Groups[stringInt.GetNumber()].Value;
+							}
+
+							if (match.Groups[stringInt.GetNamed()] == null)
+							{
+								return "NO_MATCH_GROUP";
+							}
+
+							return match.Groups[stringInt.GetNamed()].Value;
 						}
-						return String.Empty;
+						return "CRITICAL_FAILURE";
 					}
 				}
 
@@ -265,37 +365,37 @@ namespace OutlookRunProgram
 
 				internal bool Match(MailItem item, ref RegexResults results)
 				{
-					MatchCollection matchCollection = null;
+					Match match = null;
 					switch (scope)
 					{
 						case Scope.subject:
-							matchCollection = realRegex.Matches(item.Subject);
+							match = realRegex.Match(item.Subject);
 							break;
 						case Scope.body:
-							matchCollection = realRegex.Matches(item.Body);
+							match = realRegex.Match(item.Body);
 							break;
 						case Scope.from:
-							matchCollection = realRegex.Matches(item.SenderName);
+							match = realRegex.Match(item.SenderName);
 							break;
 						case Scope.to:
-							matchCollection = realRegex.Matches(item.To);
+							match = realRegex.Match(item.To);
 							break;
 						case Scope.cc:
-							matchCollection = realRegex.Matches(item.CC);
+							match = realRegex.Match(item.CC);
 							break;
 						default:
 							return false;
 					}
 
-					if (matchCollection.Count == 0) return false;
+					if (!match.Success) return false;
 
-					Globals.ThisAddIn.GetLogger().Log($"{scope.ToString()} - {matchCollection.Count}");
-					for (int i = 0; i < matchCollection.Count; ++i)
+					Globals.ThisAddIn.GetLogger().Log($"{scope.ToString()} - {realRegex.ToString()}");
+					for (int i = 0; i < match.Groups.Count; ++i)
 					{
-						Globals.ThisAddIn.GetLogger().Log($"{i}. {matchCollection[i].Value}");
+						Globals.ThisAddIn.GetLogger().Log($"{i}. {match.Groups[i].Value}");
 					}
 
-					results.Append(matchCollection, scope);
+					results.Append(match, scope);
 
 					return true;
 				}
