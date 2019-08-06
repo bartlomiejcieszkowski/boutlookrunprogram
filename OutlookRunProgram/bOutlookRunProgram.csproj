@@ -28,20 +28,20 @@
     <AssemblyName>bOutlookRunProgram</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <DefineConstants>VSTO40</DefineConstants>
+    <IsWebBootstrapper>False</IsWebBootstrapper>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <PublishUrl>publish\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.0</ApplicationVersion>
-    <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
-    <UpdateEnabled>true</UpdateEnabled>
-    <UpdateInterval>7</UpdateInterval>
+    <ApplicationVersion>1.0.5.0</ApplicationVersion>
+    <AutoIncrementApplicationRevision>false</AutoIncrementApplicationRevision>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateInterval>0</UpdateInterval>
     <UpdateIntervalUnits>days</UpdateIntervalUnits>
-    <IsWebBootstrapper>False</IsWebBootstrapper>
-    <ProductName>OutlookRunProgram</ProductName>
-    <PublisherName />
-    <SupportUrl />
-    <FriendlyName>OutlookRunProgram</FriendlyName>
+    <ProductName>bOutlookRunProgram</ProductName>
+    <PublisherName>Bartlomiej Cieszkowski</PublisherName>
+    <SupportUrl>https://github.com/bartlomiejcieszkowski/boutlookrunprogram</SupportUrl>
+    <FriendlyName>bOutlookRunProgram</FriendlyName>
     <OfficeApplicationDescription />
     <LoadBehavior>3</LoadBehavior>
   </PropertyGroup>

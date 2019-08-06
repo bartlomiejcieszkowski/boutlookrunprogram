@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -10,6 +8,7 @@ using Microsoft.Office.Interop.Outlook;
 
 namespace OutlookRunProgram
 {
+
 	internal class Ruler
 	{
 		internal class Rule
@@ -39,7 +38,7 @@ namespace OutlookRunProgram
 					named = name;
 				}
 
-				public matchType GetType() { return type; }
+				public matchType GetMatchType() { return type; }
 				public int GetNumber() { return number; }
 				public string GetNamed() { return named; }
 			}
@@ -140,7 +139,6 @@ namespace OutlookRunProgram
 							return new Arg(text);
 						}
 
-						var sub = text.Substring(2, text.Length - 2);
 						var separator = text.IndexOf('.');
 
 						int resultNumber;
@@ -167,10 +165,11 @@ namespace OutlookRunProgram
 							}
 
 							int group;
-							if (!int.TryParse(text.Substring(separator, text.Length - separator), out group))
+							string group_sub = text.Substring(separator + 1, text.Length - separator - 1);
+							if (!int.TryParse(group_sub, out group))
 							{
 								// $cN.groupname
-								stringInt = new StringInt(text.Substring(separator, text.Length - separator));
+								stringInt = new StringInt(group_sub);
 							}
 							else
 							{
@@ -206,7 +205,7 @@ namespace OutlookRunProgram
 								return match.Groups[0].Value;
 							}
 
-							if (stringInt.GetType() == StringInt.matchType.numbered)
+							if (stringInt.GetMatchType() == StringInt.matchType.numbered)
 							{
 								if (match.Groups.Count <= stringInt.GetNumber())
 								{
@@ -502,9 +501,10 @@ namespace OutlookRunProgram
 				{
 					doc.Load(xmlfile);
 				}
-				catch (System.Exception)
+				catch (System.Exception ex)
 				{
-					Globals.ThisAddIn.GetLogger().Log($"Malformed xml: {xmlfile}");
+					Globals.ThisAddIn.GetLogger().Log($"Malformed xml: {xmlfile} - {ex.ToString()}");
+					return false;
 				}
 
 				foreach (XmlNode rule_node in doc.DocumentElement.SelectNodes("/rule"))
@@ -521,8 +521,7 @@ namespace OutlookRunProgram
 
 					foreach (XmlNode regex in regexes)
 					{
-						var text = regex.InnerText;
-						if (!rule.AddRegex(text))
+						if (!rule.AddRegex(regex.InnerText))
 						{
 							// bad regex
 							return false;
